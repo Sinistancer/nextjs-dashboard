@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import prisma from '@/app/lib/prisma'; // pastikan path sesuai
-import { CreateInvoice } from '../ui/invoices/buttons';
 
 const FormSchema = z.object({
     id: z.string(),
@@ -27,15 +26,22 @@ export type State = {
         status?: string[];
     };
     message?: string | null;
+    selectedCustomer?: string;
 };
+
+
+const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
 // export async function createInvoice(formData: FormData) {
 export async function createInvoice(prevState: State, formData: FormData) {
+// export async function createInvoice(prevState: State, formData: FormData): Promise<State> {
     // Validate form fields using Zod
+    const customer_Id = String(formData.get('customerId')) || '';
+
     const validatedFields = CreateInvoice.safeParse({
-        customerId: formData.get('customerId'),
+        customerId: customer_Id,
         amount: formData.get('amount'),
-        status: formData.get('status'),
+        status: formData.get('status')
     });
 
     // If form validation fails, return errors early. Otherwise, continue.
@@ -43,6 +49,7 @@ export async function createInvoice(prevState: State, formData: FormData) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
             message: 'Missing Fields. Failed to Create Invoice.',
+            selectedCustomer: customer_Id
         };
     }
 
